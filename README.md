@@ -30,8 +30,32 @@ A project used to compare open source vs paid technologies when using weather da
 - Run the docker image
     - `docker run -p 8080:8080 weather-dash-i`
 
-## Minikube setup
+## Minikube setup and dashboard deployment
 - Install minikube
     - `brew install minikube`
 - `minikube start`
 - `minikube dashboard` (optional) needs to be run in a separate terminal
+- create a pod from the above docker image
+  - `eval $(minikube docker-env)` set the docker environment to minikube
+  - `docker compose --env-file=./.streamlit/secrets.toml build`
+  - `docker run -p 8080:8080 weather-dash-i`
+  - `kubectl run weather-dash --image=weather-dash-i --image-pull-policy=Never`
+  - `kubectl get pods` check the pod is running
+- expose the pod as a service
+  - `kubectl expose pod weather-dash --type=LoadBalancer --port=8080`
+  - `kubectl get services` check the service is running
+- `minikube service weather-dash`
+
+## Minikube MySQL setup and deployment
+- `minikube start`
+- `kubectl create -f kubectl_deploy/mysql-pv.yaml` create the persistent volume
+- `kubectl create -f kubectl_deploy/mysql-deployment.yaml` create the deployment
+- `kubectl describe deployment mysql` check the deployment is running
+- `kubectl get pods -l app=mysql` check the pod is running
+- `kubectl describe pvc mysql-pv-claim` check the persistent volume claim is running
+- `kubectl run -it --rm --image=mysql:5.6 --restart=Never mysql-client -- mysql -h mysql -ppassword` connect to the mysql pod
+- `STATUS; SHOW DATABASES;` check the status and what databases are running
+- `SELECT table_name FROM information_schema.tables;` check the available tables
+- exit with `ctrl + c`
+- `kubectl expose pod mysql-79c4686d65-74k5p --type=LoadBalancer --port=3306` expose the pod as a service
+- `kubectl get services` check the service is running

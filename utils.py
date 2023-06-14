@@ -6,8 +6,6 @@ import re
 from typing import Union, Optional, Callable, Dict
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from sklearn.ensemble import RandomForestRegressor
-from skforecast.ForecasterAutoreg import ForecasterAutoreg
-from skforecast.model_selection import grid_search_forecaster
 
 # create a color palette
 segmented_palette = ["#D81B60", "#1E88E5", "#FFC107", "#944EBC", "#004D40"]
@@ -214,109 +212,24 @@ def apply_scaling(
     return scal_df
 
 
-def run_forecast(data, outcome, feature_list, random_state=42, steps=100):
+def get_disruption_prediction(data):
     """
-    Run a forecast using the given data, outcome and feature list. The
-    forecast is run using a Random Forest Regressor as the underlying
-    regressor.
+    Get disruption prediction from the model API.
 
     Parameters
     ----------
-    data: pd.DataFrame
-        Data frame containing the data to be used for the forecast.
-    outcome: str
-        Name of the column containing the outcome variable.
-    feature_list: list
-        List of features to be used for the forecast.
-    random_state: int
-        Random state to be used for the forecast.
-    steps: int
-        Number of steps to be forecasted.
+    dict_data: pd.Series
+        Dictionary containing the data to be used for the prediction.
 
     Returns
     -------
-    results_grid_df: pd.DataFrame
-        Data frame containing the results of the forecast.
-
-    Examples
-    --------
-    >>> import pandas as pd
-    >>> from utils import run_forecast
-    >>> df = pd.read_csv("data/processed/df.csv", index_col=0)
-    >>> results_grid_df = run_forecast(df, "demand", ["temperature_2m", "rain"])
+    pred: float
+        The predicted probability of disruption.
 
     """
-    df_train = data.iloc[:-steps]
-    df_test = data.iloc[-steps:]
-
-    forecaster = ForecasterAutoreg(
-        regressor=RandomForestRegressor(random_state=random_state),
-        lags=12,  # This value will be replaced in the grid search
+    response = requests.post(
+        "http://127.0.0.1:8000/predict_prepped_data",
+        data=data.to_json(),
     )
+    return pd.DataFrame(response.json(), index=[0])
 
-    # Lags used as predictors
-    lags_grid = [10, 20]
-
-    # Regressor's hyperparameters
-    param_grid = {"n_estimators": [50, 80, 100], "max_depth": [13, 15, 20]}
-
-    try:
-        results_grid_df = pd.read_csv("params.csv")
-    except FileNotFoundError:
-        print("'top_params.csv' file not found")
-        results_grid_df = grid_search_forecaster(
-            forecaster=forecaster,
-            y=df_train[outcome],
-            exog=df_train[feature_list],
-            param_grid=param_grid,
-            lags_grid=lags_grid,
-            steps=steps,
-            refit=True,
-            metric="mean_squared_error",
-            initial_train_size=int(data.shape[0] * 0.5),
-            fixed_train_size=False,
-            return_best=True,
-            verbose=False,
-        )
-        results_grid_df.to_csv("params.csv", index=False)
-
-    top_params_df = results_grid_df.head(1)
-
-    try:
-        forecaster = ForecasterAutoreg(
-            regressor=RandomForestRegressor(
-                **top_params_df["params"].iloc[0], random_state=random_state
-            ),
-            lags=int(
-                top_params_df["lags"].iloc[0][-1]
-            ),
-        )
-    except TypeError:
-        lag_list = [int(x) for x in re.sub("\D", " ", top_params_df["lags"].iloc[0]).split()]
-        forecaster = ForecasterAutoreg(
-            regressor=RandomForestRegressor(
-                **literal_eval(top_params_df["params"].iloc[0]), random_state=random_state
-            ),
-            lags=lag_list[-1],
-        )
-
-    forecaster.fit(y=df_train[outcome])
-    y_forecast = forecaster.predict(steps=steps)
-    y_forecast.index = df_test.index
-
-    forecaster.fit(y=df_train[outcome], exog=df_train[feature_list])
-    y_forecast_w_pred = forecaster.predict(steps=steps, exog=df_test[feature_list])
-    y_forecast_w_pred.index = df_test.index
-
-    return pd.concat(
-        [
-            df_train[outcome].reset_index().assign(**{"type": "train"}),
-            df_test[outcome].reset_index().assign(**{"type": "test"}),
-            y_forecast.reset_index()
-            .rename(columns={"pred": outcome})
-            .assign(**{"type": "forecast"}),
-            y_forecast_w_pred.reset_index()
-            .rename(columns={"pred": outcome})
-            .assign(**{"type": "forecast with predictors"}),
-        ]
-    )

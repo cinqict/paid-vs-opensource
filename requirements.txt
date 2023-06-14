@@ -8,5 +8,9 @@ streamlit
 # cython
 # pystan==2.19.1.1
 # prophet
-skforecast
+# skforecast
 python-dotenv
+sqlalchemy
+pymysql
+cryptography
+xgboost

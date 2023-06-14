@@ -1,18 +1,20 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 from datetime import datetime
 from utils import (
     get_current_and_forecast,
     get_historical_weather,
     check_password,
     segmented_palette,
+    get_disruption_prediction
 )
 
 
 # config
 st.set_page_config(
-    page_title="Weather App",
+    page_title="Predicting Disruptions Due to Weather",
     page_icon=":sunny:",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -45,13 +47,6 @@ def cache_historical(
             feature_list=feature_list,
         )
 
-
-st.title("Weather Forecast App")
-
-st.write(
-    "This app shows the weather forecast for the next 7 days and historical weather data for a location of your choice."
-)
-
 # if check_password():
 st.sidebar.title("Settings")
 latitude = st.sidebar.number_input(
@@ -72,29 +67,52 @@ longitude = st.sidebar.number_input(
     format="%.6f",
 )
 
-feature_list = st.sidebar.multiselect(
-    label="Select features",
-    options=[
-        "temperature_2m",
-        "relativehumidity_2m",
-        "windspeed_10m",
-        "rain",
-    ],
-    default=["temperature_2m", "rain"],
-)
+# feature_list = st.sidebar.multiselect(
+#     label="Select features",
+#     options=[
+#         "temperature_2m",
+#         "relativehumidity_2m",
+#         "windspeed_10m",
+#         "rain",
+#     ],
+#     default=["temperature_2m", "rain"],
+# )
 
-date_range = st.sidebar.date_input(
-    label="Select date range",
-    value=[pd.to_datetime("2022-01-01"), pd.to_datetime("2022-12-30")],
-    min_value=pd.to_datetime("2022-01-01"),
-    max_value=datetime.now().date(),
-)
+feature_list = ["temperature_2m", "rain"]
 
-# current weather
-st.header("Current weather and 7 day forecast")
 df_current = cache_current(
     latitude=latitude, longitude=longitude, feature_list=feature_list
 )
+
+prepped_df = (
+    df_current.assign(**{"date": lambda x: pd.to_datetime(x["time"]).dt.date})
+    .groupby("date")
+    .agg({"temperature_2m": ["mean", "min", "max"], "rain": "sum"})
+)
+prepped_df.columns = ["_".join(col) for col in prepped_df.columns]
+full_pred_df = pd.concat(
+    [
+        get_disruption_prediction(prepped_df.iloc[i, :])
+        for i in range(prepped_df.shape[0])
+    ]
+).reset_index(drop=True).assign(**{"date": prepped_df.index})
+
+features_prediction_df = pd.merge(prepped_df.reset_index(), full_pred_df, on="date")
+
+st.title("Disruption Prediction Due to Weather")
+
+st.write(
+    """This app shows the weather forecast for the next 7 days a location of your choice,
+    and based on the current weather and the forecast, predicts the amount of minutes
+    of disruptions predicted."""
+)
+disruption_prediction = get_disruption_prediction(prepped_df.iloc[0, :]).astype(float).round(2).iloc[0, 0]
+st.markdown(f"#### Train disruption prediction in minutes for the Netherlands for today: :green[{disruption_prediction}]")
+st.write("Based on the following weather features:")
+st.write(prepped_df.iloc[[0], :])
+
+# current weather
+st.header("Current weather and 7 day forecast")
 plot_df = df_current.melt(id_vars="time")
 current_line_chart = px.line(
     plot_df,
@@ -107,32 +125,24 @@ current_line_chart = px.line(
 )
 st.plotly_chart(current_line_chart, use_container_width=True)
 
-# historical weather
-st.header("Historical weather")
+plot_df = prepped_df.reset_index().melt(id_vars="date")
 
-if len(date_range) < 2:
-    st.error("Please select a date range")
-    st.stop()
-
-if date_range[0] > date_range[1]:
-    st.error("Start date must be before end date")
-    st.stop()
-
-df_historical = cache_historical(
-    latitude=latitude,
-    longitude=longitude,
-    start_date=date_range[0].strftime("%Y-%m-%d"),
-    end_date=date_range[1].strftime("%Y-%m-%d"),
-    feature_list=feature_list,
-)
-plot_df = df_historical.melt(id_vars="time")
-historical_line_chart = px.line(
+current_box_chart = px.box(
     plot_df,
-    x="time",
+    x="date",
     y="value",
     color="variable",
-    title="Historical weather",
-    labels={"time": "Time", "value": "Value", "variable": "Feature"},
-    color_discrete_sequence=segmented_palette,
 )
-st.plotly_chart(historical_line_chart, use_container_width=True)
+
+# prediction_line_chart = px.line(
+#     data_frame=full_pred_df,
+#     x="date",
+#     y="prediction",
+# )
+
+st.header("Weather Features used for prediction")
+st.plotly_chart(current_box_chart, use_container_width=True)
+# st.plotly_chart(prediction_line_chart, use_container_width=True)
+
+
+
