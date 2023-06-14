@@ -10,7 +10,7 @@ A project used to compare open source vs paid technologies when using weather da
 
 ## Installation and Usage (python)
 - Clone the repository
-    - `git clone git@gitlab.com:cinq-data/weather-forecasting.git`
+    - `git clone git@github.com:cinqict/paid-vs-opensource.git`
 - Install dependencies
     - `pip install -r requirements.txt`
 - Run the app
@@ -18,7 +18,7 @@ A project used to compare open source vs paid technologies when using weather da
 
 ## Installation and Usage (docker)
 - Clone the repository
-    - `git clone git@gitlab.com:cinq-data/weather-forecasting.git`
+    - `git clone git@github.com:cinqict/paid-vs-opensource.git`
 - Build the docker image
     - `docker compose --env-file=./.streamlit/secrets.toml build`
 - Run the docker image
