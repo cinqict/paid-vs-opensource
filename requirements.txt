@@ -1,0 +1,12 @@
+requests
+pandas
+seaborn
+plotly
+nbformat
+scikit-learn
+streamlit
+# cython
+# pystan==2.19.1.1
+# prophet
+skforecast
+python-dotenv

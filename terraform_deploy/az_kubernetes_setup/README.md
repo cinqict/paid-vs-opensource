@@ -1,0 +1,17 @@
+## Azure kubernetes setup via Terraform instructions
+- Create an Active Directory service principal account
+    - `az ad sp create-for-rbac --skip-assignment`
+    - Save the output of this command in a file called `terraform_deploy/az_kubernetes_setup/terraform.tfvars` (see `terraform_deploy/az_kubernetes_setup/terraform.tfvars.example` for an example)
+- Run terraform
+- (need authorization to perform action 'Microsoft.Resources/subscriptions/resourcegroups/read' over scope '/subscriptions/c3deb1e1-7a98-406d-832c-64df188877df/resourcegroups/talented-gecko-rg' to run the following commands)
+    - `cd terraform_deploy/az_kubernetes_setup`
+    - `terraform init`
+    - `terraform plan`
+    - `terraform apply`
+- Configure kubectl
+    - `az aks get-credentials --resource-group rg-jamestwose-data --name weather-forecasting-cluster`
+    -  `az aks get-credentials --resource-group $(terraform output -raw resource_group_name) --name $(terraform output -raw kubernetes_cluster_name)`
+- Verify kubectl
+    - `kubectl get nodes`
+- Destroy kubernetes cluster
+    - `terraform destroy`
