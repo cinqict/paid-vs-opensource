@@ -3,7 +3,8 @@
 - launch the workspace
 - create a new cluster
 - ingest data (training data in `../data`)
-- run the ML.ipynb notebook in a databricks notebook/ workspace
+- import and run the ML.ipynb notebook in a databricks notebook/ workspace
+- (optional) look at the experiment results in the MLflow tab
 - click "use model for inference" from models tab and copy the code from "query endpoint" section
 - create a new token (click on user settings and generate new token) and save it as DATABRICKS_TOKEN in your environment variables
 - run `python test_endpoint.py` in your local python environment to test the endpoint, if you get a prediction as a response, you are good to go!

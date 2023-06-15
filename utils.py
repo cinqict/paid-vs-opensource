@@ -1,11 +1,13 @@
 import streamlit as st
 import pandas as pd
 import requests
-from ast import literal_eval
-import re
 from typing import Union, Optional, Callable, Dict
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
-from sklearn.ensemble import RandomForestRegressor
+from datetime import date
+import os
+from dotenv import load_dotenv, find_dotenv
+
+_ = load_dotenv(find_dotenv())
 
 # create a color palette
 segmented_palette = ["#D81B60", "#1E88E5", "#FFC107", "#944EBC", "#004D40"]
@@ -227,10 +229,57 @@ def get_disruption_prediction(data):
         The predicted probability of disruption.
 
     """
-    response = requests.post(
-        "http://127.0.0.1:8000/predict_prepped_data",
-        # "http://127.0.0.1:52722/predict_prepped_data",
-        data=data.to_json(),
-    )
+    try:
+        response = requests.post(
+            # "http://127.0.0.1:8000/predict_prepped_data",
+            "http://localhost:8000/predict_prepped_data",
+            data=data.to_json(),
+        )
+    except:
+        try:
+            response = requests.post(
+                "http://localhost:31292/predict_prepped_data",
+                data=data.to_json(),
+            )
+        except:
+            try:
+                response = requests.post(
+                    "http://10.103.226.248:8000/predict_prepped_data",
+                    data=data.to_json(),
+                )
+            except:
+                print("Could not connect to model API")
+    
     return pd.DataFrame(response.json(), index=[0])
 
+
+def get_amount_disruptions_NS():
+    hdr = {
+        # Request headers
+        "Cache-Control": "no-cache",
+        "Ocp-Apim-Subscription-Key": os.environ.get("NS_APP_PRIMARY"),
+    }
+    url = "https://gateway.apiportal.ns.nl/reisinformatie-api/api/v3/disruptions?isActive=false"
+    response = requests.get(url, headers=hdr)
+    print(response.status_code)
+
+    df = pd.DataFrame(
+        [
+            (x["id"], x["title"], x["start"], x["end"], x["timespans"][0]["cause"]["label"])
+            for x in response.json()
+        ],
+        columns=["id", "title", "start", "end", "cause"],
+    ).assign(
+        **{
+            "start": lambda x: pd.to_datetime(x["start"]),
+            "end": lambda x: pd.to_datetime(x["end"]),
+            "duration_minutes": lambda x: (x["end"] - x["start"]).dt.total_seconds() / 60,
+        }
+    )
+
+    amount_disruptions_NS = (
+        df.loc[lambda x: x["start"].dt.date == date.today(), :]
+        .loc[lambda x: x["end"].dt.date == date.today(), "duration_minutes"]
+        .sum()
+    )
+    return round(amount_disruptions_NS, 2)

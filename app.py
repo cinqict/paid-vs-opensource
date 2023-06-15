@@ -1,14 +1,13 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime
 from utils import (
     get_current_and_forecast,
     get_historical_weather,
     check_password,
     segmented_palette,
-    get_disruption_prediction
+    get_disruption_prediction,
+    get_amount_disruptions_NS,
 )
 
 
@@ -46,6 +45,12 @@ def cache_historical(
             end_date=end_date,
             feature_list=feature_list,
         )
+
+
+@st.cache_data(ttl=60)
+def cache_current_disruptions():
+    return get_amount_disruptions_NS()
+
 
 # if check_password():
 st.sidebar.title("Settings")
@@ -90,12 +95,16 @@ prepped_df = (
     .agg({"temperature_2m": ["mean", "min", "max"], "rain": "sum"})
 )
 prepped_df.columns = ["_".join(col) for col in prepped_df.columns]
-full_pred_df = pd.concat(
-    [
-        get_disruption_prediction(prepped_df.iloc[i, :])
-        for i in range(prepped_df.shape[0])
-    ]
-).reset_index(drop=True).assign(**{"date": prepped_df.index})
+full_pred_df = (
+    pd.concat(
+        [
+            get_disruption_prediction(prepped_df.iloc[i, :])
+            for i in range(prepped_df.shape[0])
+        ]
+    )
+    .reset_index(drop=True)
+    .assign(**{"date": prepped_df.index})
+)
 
 features_prediction_df = pd.merge(prepped_df.reset_index(), full_pred_df, on="date")
 
@@ -106,8 +115,15 @@ st.write(
     and based on the current weather and the forecast, predicts the amount of minutes
     of disruptions predicted."""
 )
-disruption_prediction = get_disruption_prediction(prepped_df.iloc[0, :]).astype(float).round(2).iloc[0, 0]
-st.markdown(f"#### Train disruption prediction in minutes for the Netherlands for today: :green[{disruption_prediction}]")
+disruption_prediction = (
+    get_disruption_prediction(prepped_df.iloc[0, :]).astype(float).round(2).iloc[0, 0]
+)
+st.markdown(
+    f"#### Train disruption prediction in minutes for the Netherlands for today: :green[{disruption_prediction}]"
+)
+st.markdown(
+    f"#### Train disruption prediction in minutes for the Netherlands for today according to NS: :blue[{cache_current_disruptions()}]"
+)
 st.write("Based on the following weather features:")
 st.write(prepped_df.iloc[[0], :])
 
@@ -143,6 +159,3 @@ current_box_chart = px.box(
 st.header("Weather Features used for prediction")
 st.plotly_chart(current_box_chart, use_container_width=True)
 # st.plotly_chart(prediction_line_chart, use_container_width=True)
-
-
-

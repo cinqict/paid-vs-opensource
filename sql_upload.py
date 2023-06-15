@@ -14,7 +14,10 @@ check_engine = create_engine(os.environ.get("MYSQL_CONNECT_URL"))
 
 # %%
 try:
-    if "train_data" not in pd.read_sql_query("SHOW DATABASES;", check_engine)["Database"].tolist():
+    if (
+        "train_data"
+        not in pd.read_sql_query("SHOW DATABASES;", check_engine)["Database"].tolist()
+    ):
         pd.read_sql_query("CREATE DATABASE train_data;", check_engine)
 except:
     print("This result object does not return rows. It has been closed automatically.")
@@ -22,9 +25,7 @@ except:
 train_engine = create_engine(os.environ.get("MYSQL_CONNECT_URL") + "train_data")
 
 # %%
-df = pd.concat(
-    [pd.read_csv(f) for f in glob("data/*.csv")], axis=0, ignore_index=True
-)
+df = pd.concat([pd.read_csv(f) for f in glob("data/*.csv")], axis=0, ignore_index=True)
 # %%
 try:
     df.to_sql("raw_data", train_engine, if_exists="fail", index=False)
