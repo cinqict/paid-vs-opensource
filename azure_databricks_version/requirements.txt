@@ -1,0 +1,12 @@
+requests
+pandas
+seaborn
+plotly
+nbformat
+scikit-learn
+streamlit
+python-dotenv
+sqlalchemy
+pymysql
+cryptography
+xgboost

@@ -13,8 +13,11 @@ _ = load_dotenv(find_dotenv())
 check_engine = create_engine(os.environ.get("MYSQL_CONNECT_URL"))
 
 # %%
-if "train_data" not in pd.read_sql_query("SHOW DATABASES;", check_engine)["Database"].tolist():
-    pd.read_sql_query("CREATE DATABASE train_data;", check_engine)
+try:
+    if "train_data" not in pd.read_sql_query("SHOW DATABASES;", check_engine)["Database"].tolist():
+        pd.read_sql_query("CREATE DATABASE train_data;", check_engine)
+except:
+    print("This result object does not return rows. It has been closed automatically.")
 
 train_engine = create_engine(os.environ.get("MYSQL_CONNECT_URL") + "train_data")
 

@@ -47,7 +47,10 @@ weather_df.columns = ["_".join(col) for col in weather_df.columns]
 # %%
 # cv = RepeatedStratifiedKFold(n_splits=5, n_repeats=10, random_state=1)
 # %%
-df = pd.merge(train_df, weather_df, on="date", how="left")
+df = (pd.merge(train_df, weather_df, on="date", how="left")
+      .loc[lambda x: x["duration_minutes"] < 20000] # remove outliers
+      .dropna()
+      )
 # %%
 X = df.drop(columns=["duration_minutes"])
 y = df["duration_minutes"]
@@ -147,4 +150,8 @@ _ = (
 X.columns
 # %%
 weather_df.iloc[0, :].to_dict()
+# %%
+_ = sns.boxplot(data=X)
+# %%
+_ = sns.scatterplot(data=pred_test_df, x="y_true", y="y_pred")
 # %%

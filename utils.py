@@ -229,6 +229,7 @@ def get_disruption_prediction(data):
     """
     response = requests.post(
         "http://127.0.0.1:8000/predict_prepped_data",
+        # "http://127.0.0.1:52722/predict_prepped_data",
         data=data.to_json(),
     )
     return pd.DataFrame(response.json(), index=[0])
