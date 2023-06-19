@@ -58,7 +58,7 @@ latitude = st.sidebar.number_input(
     "latitude",
     min_value=-90.0,
     max_value=90.0,
-    value=52.520008,
+    value=52.3116485,
     step=0.2,
     format="%.6f",
 )
@@ -67,7 +67,7 @@ longitude = st.sidebar.number_input(
     "longitude",
     min_value=-180.0,
     max_value=180.0,
-    value=13.404954,
+    value=4.9451244,
     step=0.2,
     format="%.6f",
 )

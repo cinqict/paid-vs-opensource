@@ -235,18 +235,22 @@ def get_disruption_prediction(data):
             "http://localhost:8000/predict_prepped_data",
             data=data.to_json(),
         )
+        print("option 1")
     except:
         try:
             response = requests.post(
-                "http://localhost:31292/predict_prepped_data",
+                "http://localhost:30252/predict_prepped_data",
                 data=data.to_json(),
             )
+            print("option 2")
         except:
             try:
                 response = requests.post(
-                    "http://10.103.226.248:8000/predict_prepped_data",
+                    # "http://10.103.226.248:8000/predict_prepped_data",
+                    "http://10.106.228.98:8000/predict_prepped_data",
                     data=data.to_json(),
                 )
+                print("option 3")
             except:
                 print("Could not connect to model API")
     

@@ -75,6 +75,8 @@ The comparions is currently between databricks and kubernetes.
   - `kubectl expose pod weather-dash --type=LoadBalancer --port=8080`
   - `kubectl get services` check the service is running
 - because `minikube tunnel` is running from before you can now access the dashboard at `http://localhost:8080`
+- if you have issues the model not being able to be called it is likely due to changes in the IP address/ port of the middleware service. To fix this:
+    - go to the function `utils.get_disruption_prediction()` and update the offending uris
 
 ## Cleanup
 - `kubectl delete pods --all` delete all pods

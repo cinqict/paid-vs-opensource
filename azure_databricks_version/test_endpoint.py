@@ -19,7 +19,8 @@ def create_tf_serving_json(data):
 
 def score_model(dataset):
     # url = "https://adb-3715028202055514.14.azuredatabricks.net/serving-endpoints/disruptions_prediction/invocations"
-    url = "https://adb-1846146254154564.4.azuredatabricks.net/serving-endpoints/disruptions_prediction/invocations"
+    # url = "https://adb-1846146254154564.4.azuredatabricks.net/serving-endpoints/disruptions_prediction/invocations"
+    url = "https://adb-8041947923484593.13.azuredatabricks.net/serving-endpoints/disruption-prediction/invocations"
     headers = {
         "Authorization": f'Bearer {os.environ.get("DATABRICKS_TOKEN")}',
         "Content-Type": "application/json",
