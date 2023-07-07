@@ -20,7 +20,8 @@ def create_tf_serving_json(data):
 def score_model(dataset):
     # url = "https://adb-3715028202055514.14.azuredatabricks.net/serving-endpoints/disruptions_prediction/invocations"
     # url = "https://adb-1846146254154564.4.azuredatabricks.net/serving-endpoints/disruptions_prediction/invocations"
-    url = "https://adb-8041947923484593.13.azuredatabricks.net/serving-endpoints/disruption-prediction/invocations"
+    # url = "https://adb-8041947923484593.13.azuredatabricks.net/serving-endpoints/disruption-prediction/invocations"
+    url = 'https://adb-5056669161281979.19.azuredatabricks.net/serving-endpoints/disruption-prediction-model/invocations'
     headers = {
         "Authorization": f'Bearer {os.environ.get("DATABRICKS_TOKEN")}',
         "Content-Type": "application/json",
@@ -43,8 +44,8 @@ def score_model(dataset):
 X = pd.DataFrame(
     {
         "temperature_2m_mean": [10.0],
-        "temperature_2m_min": [10.0],
-        "temperature_2m_max": [10.0],
+        "temperature_2m_min": [8.0],
+        "temperature_2m_max": [12.0],
         "rain_sum": [0.0],
     }
 )

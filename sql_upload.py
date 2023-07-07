@@ -5,12 +5,14 @@ import pandas as pd
 from dotenv import load_dotenv, find_dotenv
 from glob import glob
 
-# %%
 _ = load_dotenv(find_dotenv())
 
-# %%
 # mysql+pymysql://<user>:<password>@<host>[:<port>]/<dbname>
 check_engine = create_engine(os.environ.get("MYSQL_CONNECT_URL"))
+
+print(os.environ.get("MYSQL_CONNECT_URL"))
+print(pd.read_sql_query("SHOW DATABASES;", check_engine))
+pd.read_sql_query("SHOW DATABASES;", check_engine)["Database"].tolist()
 
 # %%
 try:

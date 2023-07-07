@@ -267,11 +267,19 @@ def get_amount_disruptions_NS():
     response = requests.get(url, headers=hdr)
     print(response.status_code)
 
+    body_list = []
+    for x in response.json():
+        try:
+            body_list.append(
+            
+                (x["id"], x["title"], x["start"], x["end"], x["timespans"][0]["cause"]["label"])
+            )
+        except:
+            print("error")
+        
+    
     df = pd.DataFrame(
-        [
-            (x["id"], x["title"], x["start"], x["end"], x["timespans"][0]["cause"]["label"])
-            for x in response.json()
-        ],
+        body_list,
         columns=["id", "title", "start", "end", "cause"],
     ).assign(
         **{
